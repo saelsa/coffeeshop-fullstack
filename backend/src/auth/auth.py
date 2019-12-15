@@ -39,6 +39,7 @@ def get_token_auth_header():
     """Obtains the Access Token from the Authorization Header
     """
     auth = request.headers.get('Authorization', None)
+
     if not auth:
         raise AuthError({
             'code': 'authorization_header_missing',
@@ -192,7 +193,10 @@ def requires_auth(permission=''):
             try:
                 payload = verify_decode_jwt(token)
             except:
-                abort(401)
+                raise AuthError({
+                    'code': 'invalid_token',
+                    'description': 'Access denied due to invalid token'
+                }, 401)
 
             check_permissions(permission, payload)
 

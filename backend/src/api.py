@@ -53,7 +53,8 @@ def get_drinks():
 
 
 @app.route("/drinks-detail")
-def get_drink_detail():
+@requires_auth('get:drinks-detail')
+def get_drink_detail(jwt):
     try:
         drinks = Drink.query.all()
 
@@ -77,7 +78,8 @@ def get_drink_detail():
 
 
 @app.route("/drinks", methods=['POST'])
-def add_drink():
+@requires_auth('post:drinks')
+def add_drink(jwt):
 
     title = request.form.get('title')
     recipe = request.form.get('recipe')
@@ -107,6 +109,7 @@ def add_drink():
         or appropriate status code indicating reason for failure
 '''
 @app.route("/drinks/<id>", methods=['PATCH'])
+@requires_auth('patch:drinks')
 def update_drink(id):
 
     drink = Drink.query.get(id)
@@ -138,6 +141,7 @@ def update_drink(id):
         or appropriate status code indicating reason for failure
 '''
 @app.route("/drinks/<id>", methods=['DELETE'])
+@requires_auth('delete:drinks')
 def delete_drink(id):
 
     drink = Drink.query.get(id)
@@ -196,10 +200,11 @@ def not_found(error):
 @TODO implement error handler for AuthError
     error handler should conform to general task above 
 '''
-@app.errorhandler(401)
-def access_denied(error):
+@app.errorhandler(AuthError)
+def handle_auth_error(ex):
     return jsonify({
         "success": False,
-        "error": 401,
-        "message": "access denied"
-    }), 404
+        "error": ex.status_code,
+        'message': ex.error
+
+    })
