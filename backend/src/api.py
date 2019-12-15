@@ -81,11 +81,16 @@ def get_drink_detail(jwt):
 @requires_auth('post:drinks')
 def add_drink(jwt):
 
-    title = request.form.get('title')
-    recipe = request.form.get('recipe')
+    body = request.get_json()
+
+    if not ('title' in body and 'recipe' in body):
+        abort(422)
+
+    title = body.get('title')
+    recipe = body.get('recipe')
 
     try:
-        drink = Drink(title=title, recipe=recipe)
+        drink = Drink(title=title, recipe=json.dumps(recipe))
         drink.insert()
 
         return jsonify({
@@ -110,14 +115,23 @@ def add_drink(jwt):
 '''
 @app.route("/drinks/<id>", methods=['PATCH'])
 @requires_auth('patch:drinks')
-def update_drink(id):
+def update_drink(jwt, id):
 
     drink = Drink.query.get(id)
 
     if drink:
         try:
-            drink.title = request.form['title']
-            drink.recipe = request.form['recipe']
+
+            body = request.get_json()
+
+            title = body.get('title')
+            recipe = body.get('recipe')
+
+            if title:
+                drink.title = title
+            if recipe:
+                drink.title = recipe
+
             drink.update()
 
             return jsonify({
@@ -142,7 +156,7 @@ def update_drink(id):
 '''
 @app.route("/drinks/<id>", methods=['DELETE'])
 @requires_auth('delete:drinks')
-def delete_drink(id):
+def delete_drink(jwt, id):
 
     drink = Drink.query.get(id)
 
@@ -206,5 +220,4 @@ def handle_auth_error(ex):
         "success": False,
         "error": ex.status_code,
         'message': ex.error
-
-    })
+    }), 401
